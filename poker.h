@@ -19,6 +19,13 @@ namespace Cards
         RoyalFlush
     };
 
+    enum class State
+    {
+        StakeChoose,
+        CardChoose,
+        Result
+    };
+
     class Poker
     {
     public:
@@ -27,7 +34,7 @@ namespace Cards
         void PlayNextRound();
         void ChangeCards(bool shouldBeChanged[5]);
     private:
-        void SetStakes();
+        void InitStakes();
         void DrawNewHand();
         void DrawChangedCards(bool shouldBeChanged[5]);
 
@@ -60,6 +67,7 @@ namespace Cards
         std::vector<int> stakes;
         int stakeIndex;
         long balance;
+        State state;
     };
 } // namespace Cards
 

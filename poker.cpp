@@ -5,7 +5,7 @@
 
 #include "poker.h"
 
-Cards::Poker::Poker(long balance, int seed) : balance(balance)
+Cards::Poker::Poker(long balance, int seed) : balance(balance), state(Cards::State::StakeChoose)
 {
     if (seed == 0)
         srand(time(NULL));
@@ -13,7 +13,7 @@ Cards::Poker::Poker(long balance, int seed) : balance(balance)
         srand(seed);
     cards = std::vector<Cards::Card>();
     usedCards = std::vector<int>();
-    SetStakes();
+    InitStakes();
     if (balance < 10)
         balance = 10;
     std::cout << "Welcome to simple poker!" << std::endl;
@@ -22,6 +22,12 @@ Cards::Poker::Poker(long balance, int seed) : balance(balance)
 
 void Cards::Poker::PlayNextRound()
 {
+    if (state != Cards::State::StakeChoose)
+    {
+        std::cout << "You cannot call this method!" << std::endl;
+        return;
+    }
+    state = Cards::State::CardChoose;
     if (balance < stakes[stakeIndex])
     {
         std::cout << "You do not have enough tokens to play :(" << std::endl;
@@ -34,6 +40,12 @@ void Cards::Poker::PlayNextRound()
 
 void Cards::Poker::ChangeCards(bool shouldBeChanged[5])
 {
+    if (state != Cards::State::CardChoose)
+    {
+        std::cout << "You cannot call this method!" << std::endl;
+        return;
+    }
+    state = Cards::State::Result;
     int cardsCount = 0;
     for (int i = 0; i < 5; i++)
     {
@@ -56,7 +68,7 @@ void Cards::Poker::ChangeCards(bool shouldBeChanged[5])
     std::cout << "Your current balance is " << balance << " tokens." << std::endl;
 }
 
-void Cards::Poker::SetStakes()
+void Cards::Poker::InitStakes()
 {
     stakeIndex = 0;
     stakes = std::vector<int>(6);
