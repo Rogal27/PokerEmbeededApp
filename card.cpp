@@ -1,13 +1,28 @@
 #include "card.h"
 
-Cards::Card::Card(Suits _suit, int _value): suit(_suit), value(_value)
+Cards::Card::Card(Suits _suit, int _value) : suit(_suit), value(_value)
 {
     SetCardDeck();
 }
 
 std::vector<std::string> Cards::Card::GetCardDeck()
 {
-    return CardDeck;
+    return cardDeck;
+}
+
+std::vector<std::string> Cards::Card::GetDrawCardDeck()
+{
+    auto drawCardDeck = std::vector<std::string>(9);
+    drawCardDeck[0] = " ";
+    drawCardDeck[1] = " ";
+    drawCardDeck[2] = "┌────────┐";
+    drawCardDeck[3] = "│        │";
+    drawCardDeck[4] = "│  Draw  │";
+    drawCardDeck[5] = "│        │";
+    drawCardDeck[6] = "└────────┘";
+    drawCardDeck[7] = " ";
+    drawCardDeck[8] = " ";
+    return drawCardDeck;
 }
 
 std::string Cards::Card::GetSuitSymbol()
@@ -21,7 +36,7 @@ std::string Cards::Card::GetSuitSymbol()
     case Suits::Heart:
         return "\u2665";
     case Suits::Spade:
-        return "\u2660";    
+        return "\u2660";
     default:
         break;
     }
@@ -69,14 +84,14 @@ std::string Cards::Card::GetValueSymbolDown()
 void Cards::Card::SetCardDeck()
 {
     std::string symbol = GetSuitSymbol();
-    CardDeck = std::vector<std::string>(9);
-    CardDeck[0] = "┌─────────┐";  
-    CardDeck[1] = "│" + GetValueSymbolUp() + "       │";
-    CardDeck[2] = "│  " + symbol + " " + symbol + " " + symbol + "  │";
-    CardDeck[3] = "│   " + symbol + " " + symbol + "   │";
-    CardDeck[4] = CardDeck[2];
-    CardDeck[5] = CardDeck[3];
-    CardDeck[6] = CardDeck[2];
-    CardDeck[7] = "│       " + GetValueSymbolDown() + "│";
-    CardDeck[8] = "└─────────┘";
+    cardDeck = std::vector<std::string>(9);
+    cardDeck[0] = "┌─────────┐";
+    cardDeck[1] = "│" + GetValueSymbolUp() + "       │";
+    cardDeck[2] = "│  " + symbol + " " + symbol + " " + symbol + "  │";
+    cardDeck[3] = "│   " + symbol + " " + symbol + "   │";
+    cardDeck[4] = cardDeck[2];
+    cardDeck[5] = cardDeck[3];
+    cardDeck[6] = cardDeck[2];
+    cardDeck[7] = "│       " + GetValueSymbolDown() + "│";
+    cardDeck[8] = "└─────────┘";
 }

@@ -1,6 +1,6 @@
 CC=$(CROSS_COMPILE)g++
 LIBS=-lgpiod 
-FILES=prog.cpp card.cpp
+FILES=prog.cpp card.cpp poker.cpp
 TARGET=prog
 
 all: ${TARGET}

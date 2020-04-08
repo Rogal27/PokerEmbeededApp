@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <iostream>
 
-#include "card.h"
+#include "poker.h"
 
 #ifndef	CONSUMER
 #define	CONSUMER	"Consumer"
@@ -31,14 +31,9 @@ int main(int argc, char* argv[])
 
 	//std::cout << "unicode test : ąęćł \u2660 \U1f0b3" << std::endl;
 
-	auto card = Cards::Card(Cards::Suits::Heart, 10);
+	auto game = Cards::Poker(1000,30);
+	game.PlayNextRound();
 
-	auto deck = card.GetCardDeck();
-	for (size_t i = 0; i < deck.size(); i++)
-	{
-		std::cout<< deck[i] << std::endl;
-	}
-	
 
 	chip = CreateChip(chipname);
 	if(!chip)
