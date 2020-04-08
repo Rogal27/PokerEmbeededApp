@@ -1,8 +1,9 @@
-
 #include <gpiod.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
+
+#include "card.h"
 
 #ifndef	CONSUMER
 #define	CONSUMER	"Consumer"
@@ -19,11 +20,25 @@ int SetLEDValue(struct gpiod_line* line, int value);
 int main(int argc, char* argv[])
 {
 	const char *chipname = "gpiochip1";
-	unsigned int line_num = 24;	// GPIO Pin #24 - led
-	unsigned int val;
+	//unsigned int line_num = 24;	// GPIO Pin #24 - led
+	unsigned int line_num = 12;	// GPIO Pin #12 - button
+	int val;
+	struct timespec ts = { 1, 0 };
+	struct gpiod_line_event event;
 	struct gpiod_chip *chip;
 	struct gpiod_line *line;
-	int i;
+	int i, ret;
+
+	//std::cout << "unicode test : ąęćł \u2660 \U1f0b3" << std::endl;
+
+	auto card = Cards::Card(Cards::Suits::Heart, 10);
+
+	auto deck = card.GetCardDeck();
+	for (size_t i = 0; i < deck.size(); i++)
+	{
+		std::cout<< deck[i] << std::endl;
+	}
+	
 
 	chip = CreateChip(chipname);
 	if(!chip)
@@ -33,17 +48,42 @@ int main(int argc, char* argv[])
 	if(!line)
 		goto release_line;
 
-	if(LineRequestOutput(line) < 0)
-		goto release_line;
+	// if(LineRequestOutput(line) < 0)
+	// 	goto release_line;
 
-	/* Blink 20 times */
-	for (i = 0; i < 20; i++) {
-		if(SetLEDValue(line, i%2) < 0)
-			goto release_line;
-		printf("Output %u on line #%u\n", i%2, line_num);
-		sleep(1);
-		//val = !val;
+	ret = gpiod_line_request_both_edges_events(line, CONSUMER);
+	if (ret < 0) {
+		perror("Request event notification failed\n");
+		ret = -1;
+		goto release_line;
 	}
+
+	/* Notify event up to 20 times */
+	i = 0;
+	while (i <= 20) {
+		ret = gpiod_line_event_wait(line, &ts);
+		if (ret < 0) {
+			perror("Wait event notification failed\n");
+			ret = -1;
+			goto release_line;
+		} else if (ret == 0) {
+			printf("Wait event notification on line #%u timeout\n", line_num);
+			continue;
+		}
+
+		ret = gpiod_line_event_read(line, &event);
+		printf("Get event notification on line #%u %d times\n", line_num, i);
+		if (ret < 0) {
+			perror("Read last event notification failed\n");
+			ret = -1;
+			goto release_line;
+		}
+		sleep(1);
+
+		i++;
+	}
+
+	ret = 0;
 
 release_line:
 	//release all lines
