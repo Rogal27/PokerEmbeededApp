@@ -5,9 +5,24 @@ Cards::Card::Card(Suits _suit, int _value) : suit(_suit), value(_value)
     SetCardDeck();
 }
 
-std::vector<std::string> Cards::Card::GetCardDeck()
+std::vector<std::string> Cards::Card::GetCardDeck() const
 {
     return cardDeck;
+}
+
+Cards::Suits Cards::Card::GetSuit() const
+{
+    return suit;
+}
+
+int Cards::Card::GetValue() const
+{
+    return value;
+}
+
+bool Cards::Card::operator<(const Card& card) const
+{
+    return this->value < card.value;
 }
 
 std::vector<std::string> Cards::Card::GetDrawCardDeck()

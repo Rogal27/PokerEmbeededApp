@@ -20,8 +20,13 @@ namespace Cards
     public:
         Card(Suits suit, int value);
 
-        std::vector<std::string> GetCardDeck();
+        std::vector<std::string> GetCardDeck() const;
         static std::vector<std::string> GetDrawCardDeck();
+
+        Suits GetSuit() const;
+        int GetValue() const;
+
+        bool operator<(const Card& card) const;
     private:
         std::string GetSuitSymbol();
         std::string GetValueSymbolUp();
