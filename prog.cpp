@@ -39,13 +39,22 @@ int main(int argc, char *argv[])
 	}
 	std::cout << "Create game" << std::endl;
 	auto game = Cards::Poker(1000);
-	std::cout << "Play next round" << std::endl;
 	game.PlayNextRound();
-	//sleep(5);
 	game.DrawSelectPanel(shouldBeChanged, 5);
-	std::cout << "Change cards" << std::endl;
 	game.ChangeCards(shouldBeChanged);
+	game.ShowStakePrompt();
 
+	sleep(2);
+	for (int i = 0; i < 5; i++)
+	{
+		if (i % 2 == 1)
+			shouldBeChanged[i] = true;
+		else
+			shouldBeChanged[i] = true;
+	}
+	game.PlayNextRound();
+	game.DrawSelectPanel(shouldBeChanged, 5);
+	game.ChangeCards(shouldBeChanged);
 // 	chip = CreateChip(chipname);
 // 	if (!chip)
 // 		goto close_chip;

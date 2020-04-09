@@ -32,14 +32,16 @@ namespace Cards
         Poker(long balance, int seed = 0);
 
         void PlayNextRound();
-        void ChangeCards(bool shouldBeChanged[5]);
+        bool ChangeCards(bool shouldBeChanged[5]);
         void DrawSelectPanel(bool shouldBeChanged[5], int currentSelect);
         void SetStake(int stakeIndex);
+        void ShowStakePrompt();
     private:
         void InitStakes();
         void DrawNewHand();
         void DrawChangedCards(bool shouldBeChanged[5]);
         void DrawSelectPanel(bool shouldBeChanged[5], int currentSelect, bool isFirstTimeDraw);
+        void ShowStakePrompt(bool isFirstTimeDraw);
 
         int NextInt();
         Card ConvertIntToCard(int i);

@@ -18,6 +18,7 @@ Cards::Poker::Poker(long balance, int seed) : balance(balance), state(Cards::Sta
         balance = 10;
     std::cout << "Welcome to simple poker!" << std::endl;
     std::cout << "Your current balance is " << balance << " tokens." << std::endl;
+    ShowStakePrompt(true);
 }
 
 void Cards::Poker::PlayNextRound()
@@ -33,6 +34,7 @@ void Cards::Poker::PlayNextRound()
         std::cout << "You do not have enough tokens to play :(" << std::endl;
         return;
     }
+    std::cout << "Select cards to replace them. (Move with left and right button, select with middle)" << std::endl;
     balance -= stakes[stakeIndex];
     DrawNewHand();
     PrintCurrentHand(true);
@@ -41,14 +43,13 @@ void Cards::Poker::PlayNextRound()
     DrawSelectPanel(shouldBeChanged, 0, true);
 }
 
-void Cards::Poker::ChangeCards(bool shouldBeChanged[5])
+bool Cards::Poker::ChangeCards(bool shouldBeChanged[5])
 {
     if (state != Cards::State::CardChoose)
     {
         std::cout << "You cannot call this method!" << std::endl;
-        return;
+        return false;
     }
-    state = Cards::State::Result;
     int cardsCount = 0;
     for (int i = 0; i < 5; i++)
     {
@@ -58,8 +59,9 @@ void Cards::Poker::ChangeCards(bool shouldBeChanged[5])
     if (cardsCount == 5)
     {
         std::cout << "You cannot change 5 cards!" << std::endl;
-        return;
+        return false;
     }
+    state = Cards::State::Result;
     std::cout << "Cards after change" << std::endl;
     DrawChangedCards(shouldBeChanged);
     PrintCurrentHand(false);
@@ -69,6 +71,9 @@ void Cards::Poker::ChangeCards(bool shouldBeChanged[5])
     PrintResult(result, profit);
     balance += profit;
     std::cout << "Your current balance is " << balance << " tokens." << std::endl;
+    std::cout << "Do you want to play again? (Press middle button to play again)" << std::endl;
+    state = Cards::State::StakeChoose;
+    return true;
 }
 
 void Cards::Poker::DrawSelectPanel(bool shouldBeChanged[5], int currentSelect)
@@ -81,10 +86,20 @@ void Cards::Poker::DrawSelectPanel(bool shouldBeChanged[5], int currentSelect)
 
     std::cout << "\x1b[1A"
               << "\x1b[1A"
-              << "\x1b[1A"
-              << "\x1b[1A" << std::endl;
+              << "\x1b[1A";
 
     DrawSelectPanel(shouldBeChanged, currentSelect, true);
+}
+
+void Cards::Poker::ShowStakePrompt()
+{
+    if (state != Cards::State::StakeChoose)
+    {
+        std::cout << "You cannot call this method!" << std::endl;
+        return;
+    }
+    std::cout << "\x1b[1A";
+    ShowStakePrompt(true);
 }
 
 void Cards::Poker::SetStake(int stakeIndex)
@@ -185,6 +200,16 @@ void Cards::Poker::DrawSelectPanel(bool shouldBeChanged[5], int currentSelect, b
                   << "  ";
     }
     std::cout << "└────────┘" << std::endl;
+}
+
+void Cards::Poker::ShowStakePrompt(bool isFirstTimeDraw)
+{
+    if (state != Cards::State::StakeChoose)
+    {
+        std::cout << "You cannot call this method!" << std::endl;
+        return;
+    }
+    std::cout << "Your current stake is: " << stakes[stakeIndex] <<". (Press left or right button to adjust, middle to play)" << std::endl;
 }
 
 int Cards::Poker::NextInt()
