@@ -31,6 +31,7 @@ namespace Cards
         std::string GetSuitSymbol();
         std::string GetValueSymbolUp();
         std::string GetValueSymbolDown();
+        std::string GetSuitNameDown();
         void SetCardDeck();
 
         Suits suit;

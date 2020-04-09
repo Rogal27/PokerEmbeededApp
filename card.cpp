@@ -20,7 +20,7 @@ int Cards::Card::GetValue() const
     return value;
 }
 
-bool Cards::Card::operator<(const Card& card) const
+bool Cards::Card::operator<(const Card &card) const
 {
     return this->value < card.value;
 }
@@ -96,6 +96,24 @@ std::string Cards::Card::GetValueSymbolDown()
     return "  ";
 }
 
+std::string Cards::Card::GetSuitNameDown()
+{
+    switch (suit)
+    {
+    case Suits::Club:
+        return "Club ";
+    case Suits::Diamond:
+        return "Diam.";
+    case Suits::Heart:
+        return "Heart";
+    case Suits::Spade:
+        return "Spade";
+    default:
+        break;
+    }
+    return "     ";
+}
+
 void Cards::Card::SetCardDeck()
 {
     std::string symbol = GetSuitSymbol();
@@ -107,6 +125,6 @@ void Cards::Card::SetCardDeck()
     cardDeck[4] = cardDeck[2];
     cardDeck[5] = cardDeck[3];
     cardDeck[6] = cardDeck[2];
-    cardDeck[7] = "│       " + GetValueSymbolDown() + "│";
+    cardDeck[7] = "│" + GetSuitNameDown() + "  " + GetValueSymbolDown() + "│";
     cardDeck[8] = "└─────────┘";
 }
