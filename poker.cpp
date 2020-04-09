@@ -15,6 +15,7 @@ Cards::Poker::Poker(long balance, struct gpiod_line **lines, int linesCount, int
         srand(seed);
     cards = std::vector<Cards::Card>();
     usedCards = std::vector<int>();
+    hasSelectedAllCards = false;
     InitStakes();
     if (balance < 10)
         balance = 10;
@@ -24,6 +25,11 @@ Cards::Poker::Poker(long balance, struct gpiod_line **lines, int linesCount, int
     std::cout << "Your current balance is " << balance << " tokens." << std::endl;
     ShowStakePrompt(true);
     SetStakeWithLED(stakeIndex);
+}
+
+Cards::Poker::~Poker()
+{
+    CleardLEDs();
 }
 
 void Cards::Poker::PlayNextRound()
@@ -64,10 +70,11 @@ bool Cards::Poker::ChangeCards(bool shouldBeChanged[5])
     if (cardsCount == 5)
     {
         std::cout << "You cannot change 5 cards!" << std::endl;
+        hasSelectedAllCards = true;
         return false;
     }
     state = Cards::State::Result;
-    std::cout << "Cards after change" << std::endl;
+    std::cout << "Cards after change                    " << std::endl;
     DrawChangedCards(shouldBeChanged);
     PrintCurrentHand(false);
 
@@ -94,6 +101,12 @@ void Cards::Poker::DrawSelectPanel(bool shouldBeChanged[5], int currentSelect)
     std::cout << "\x1b[1A"
               << "\x1b[1A"
               << "\x1b[1A";
+    
+    if(hasSelectedAllCards == true)
+    {
+        std::cout << "\x1b[1A";
+        hasSelectedAllCards = false;
+    }
 
     int count = CountSelectedCards(shouldBeChanged);
     LightFirstNLeds(count);
@@ -118,6 +131,7 @@ void Cards::Poker::SetStake(int stakeIndex)
     if (stakeIndex >= stakes.size())
         stakeIndex = stakes.size() - 1;
     this->stakeIndex = stakeIndex;
+    ShowStakePrompt();
 }
 
 void Cards::Poker::SetStakeWithLED(int stakeIndex)
@@ -128,7 +142,8 @@ void Cards::Poker::SetStakeWithLED(int stakeIndex)
         stakeIndex = stakes.size() - 1;
     this->stakeIndex = stakeIndex;
 
-    LightFirstNLeds(stakeIndex);
+    LightFirstNLeds(stakeIndex + 1);
+    ShowStakePrompt();
 }
 
 void Cards::Poker::InitStakes()
@@ -559,7 +574,7 @@ void Cards::Poker::CleardLEDs()
     for (int i = 0; i < linesCount; i++)
     {
         SetLEDValue(lines[i], 0);
-    }    
+    }
 }
 
 void Cards::Poker::FlashLEDs()

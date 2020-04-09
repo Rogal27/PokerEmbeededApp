@@ -33,6 +33,8 @@ class Poker
 public:
     Poker(long balance, struct gpiod_line **lines, int linesCount, int seed = 0);
 
+    ~Poker();
+
     void PlayNextRound();
     bool ChangeCards(bool shouldBeChanged[5]);
     void DrawSelectPanel(bool shouldBeChanged[5], int currentSelect);
@@ -88,6 +90,7 @@ private:
     State state;
     struct gpiod_line **lines;
     int linesCount;
+    bool hasSelectedAllCards;
 };
 } // namespace Cards
 
