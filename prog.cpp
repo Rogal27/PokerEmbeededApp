@@ -133,7 +133,10 @@ int main(int argc, char *argv[])
 			{
 				readLine = readPressedButton(&bulkButton, &timeout, &eventBulkButton);
 				if (readLine == NULL)
+				{
+					inGame = false;
 					break;
+				}
 				switch (getPressedButtonType(readLine, button_line, BUTTONS_COUNT))
 				{
 				case ButtonType::LEFT:
@@ -161,7 +164,10 @@ int main(int argc, char *argv[])
 			{
 				readLine = readPressedButton(&bulkButton, &timeout, &eventBulkButton);
 				if (readLine == NULL)
+				{
+					inGame = false;
 					break;
+				}
 				switch (getPressedButtonType(readLine, button_line, BUTTONS_COUNT))
 				{
 				case ButtonType::LEFT:
@@ -197,12 +203,16 @@ int main(int argc, char *argv[])
 			{
 				readLine = readPressedButton(&bulkButton, &timeout, &eventBulkButton);
 				if (readLine == NULL)
+				{
+					inGame = false;
 					break;
+				}
 				switch (getPressedButtonType(readLine, button_line, BUTTONS_COUNT))
 				{
 				case ButtonType::LEFT:
 				case ButtonType::RIGHT:
 					inGame = false;
+					goToNextPart = true;
 					std::cout << "Thanks for playing :)" << std::endl;
 					break;
 				case ButtonType::MIDDLE:

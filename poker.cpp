@@ -120,8 +120,9 @@ void Cards::Poker::ShowStakePrompt()
         std::cout << "You cannot call this method!" << std::endl;
         return;
     }
-    std::cout << "\x1b[1A";
+    std::cout << "\x1b[1A";    
     ShowStakePrompt(true);
+    LightFirstNLeds(stakeIndex + 1);
 }
 
 void Cards::Poker::SetStake(int stakeIndex)
@@ -142,7 +143,6 @@ void Cards::Poker::SetStakeWithLED(int stakeIndex)
         stakeIndex = stakes.size() - 1;
     this->stakeIndex = stakeIndex;
 
-    LightFirstNLeds(stakeIndex + 1);
     ShowStakePrompt();
 }
 
