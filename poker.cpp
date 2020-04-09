@@ -373,9 +373,9 @@ bool Cards::Poker::CheckFullHouse()
 {
     std::sort(cards.begin(), cards.end());
 
-    if (cards[0].GetValue() == cards[1].GetValue() && cards[3].GetValue() == cards[3].GetValue())
+    if (cards[0].GetValue() == cards[1].GetValue() && cards[3].GetValue() == cards[4].GetValue())
     {
-        if (cards[3].GetValue() == cards[2].GetValue() || cards[3].GetValue() == cards[4].GetValue())
+        if (cards[1].GetValue() == cards[2].GetValue() || cards[2].GetValue() == cards[3].GetValue())
             return true;
     }
     return false;
