@@ -13,23 +13,36 @@
 					 fprintf(stderr, "%s:%d\n", __FILE__, __LINE__))
 
 constexpr int LEDS_COUNT = 4;
+constexpr int BUTTONS_COUNT = 3;
 
 struct gpiod_chip *CreateChip(const char *chipname);
 struct gpiod_line *GetLine(struct gpiod_chip *chip, unsigned int line_num);
 int LineRequestOutput(struct gpiod_line *line, const char *consumer = CONSUMER, int default_val = 0);
 int SetLEDValue(struct gpiod_line *line, int value);
+int RequestBulkEvents(struct gpiod_line_bulk *bulk, const char *consumer = CONSUMER);
+struct gpiod_line *readPressedButton(struct gpiod_line_bulk *bulk, struct timespec *timeout, struct gpiod_line_bulk *event_bulk);
+ButtonType getPressedButtonType(struct gpiod_line *line, struct gpiod_line **buttons, int buttonsCount);
 
-int main(int argc, char *argv[])
+enum class ButtonType
 {
-	const char *chipname = "gpiochip1";
-	//unsigned int line_num = 24;	// GPIO Pin #24 - led
-	unsigned int line_num = 12; // GPIO Pin #12 - button
-	int val;
-	struct timespec ts = {1, 0};
-	struct gpiod_line_event event;
-	struct gpiod_chip *chip;
+	LEFT,
+	MIDDLE,
+	RIGHT,
+	NONE
+}
 
-	int i, ret;
+int
+main(int argc, char *argv[])
+{
+
+	//unsigned int line_num = 24;	// GPIO Pin #24 - led
+	//unsigned int line_num = 12; // GPIO Pin #12 - button
+	//int val;
+	//struct timespec ts = {1, 0};
+
+	//chip
+	struct gpiod_chip *chip;
+	const char *chipname = "gpiochip1";
 
 	//leds
 	struct gpiod_line *led_line[LEDS_COUNT];
@@ -37,6 +50,16 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < LEDS_COUNT; i++)
 	{
 		led_line_num[i] = 24 + i; // GPIO Pin #24+i - led
+	}
+
+	//buttons
+	struct gpiod_line *button_line[BUTTONS_COUNT];
+	unsigned int button_line_num[BUTTONS_COUNT];
+	struct gpiod_line_bulk *bulkButton;
+	struct gpiod_line_bulk *eventBulkButton;
+	for (int i = 0; i < BUTTONS_COUNT; i++)
+	{
+		button_line_num[i] = 12 + i; // GPIO Pin #12+i - button
 	}
 
 	//create chip
@@ -49,15 +72,31 @@ int main(int argc, char *argv[])
 	{
 		led_line[i] = GetLine(chip, led_line_num[i]);
 		if (!led_line[i])
-			goto release_line;
+			goto release_line_led;
+	}
+	//get lines for BUTTON
+	for (int i = 0; i < BUTTON_COUNT; i++)
+	{
+		button_line[i] = GetLine(chip, button_line_num[i]);
+		if (!button_line[i])
+			goto release_line_button;
 	}
 
 	//request output for LED
 	for (int i = 0; i < LEDS_COUNT; i++)
 	{
 		if (LineRequestOutput(led_line[i]) < 0)
-			goto release_line;
+			goto release_line_button;
 	}
+
+	//set bulk button
+	gpiod_line_bulk_init(bulkButton);
+	for (int i = 0; i < BUTTONS_COUNT; i++)
+	{
+		gpiod_line_bulk_add(bulkButton, button_line[i]);
+	}
+	if (RequestBulkEvents(bulkButton) < 0)
+		goto release_line_button;
 
 	//gameplay
 	bool shouldBeChanged[5];
@@ -69,15 +108,15 @@ int main(int argc, char *argv[])
 			shouldBeChanged[i] = true;
 	}
 	std::cout << "Create game" << std::endl;
-	Cards::Poker* game;
+	Cards::Poker *game;
 	try
 	{
-		game = new Cards::Poker(1000, led_line, LEDS_COUNT,0);
+		game = new Cards::Poker(1000, led_line, LEDS_COUNT, 0);
 	}
 	catch (const std::runtime_error &e)
 	{
 		std::cerr << e.what() << '\n';
-		goto release_line;
+		goto delete_game;
 	}
 
 	sleep(2);
@@ -95,7 +134,7 @@ int main(int argc, char *argv[])
 	catch (const std::runtime_error &e)
 	{
 		std::cerr << e.what() << '\n';
-		goto release_line;
+		goto delete_game;
 	}
 
 	sleep(2);
@@ -118,7 +157,7 @@ int main(int argc, char *argv[])
 	catch (const std::runtime_error &e)
 	{
 		std::cerr << e.what() << '\n';
-		goto release_line;
+		goto delete_game;
 	}
 
 	// 	ret = gpiod_line_request_both_edges_events(line, CONSUMER);
@@ -160,10 +199,14 @@ int main(int argc, char *argv[])
 	// 	}
 
 	// 	ret = 0;
-
-release_line:
+delete_game:
 	delete game;
-	//release all lines
+release_line_button:
+	for (int i = 0; i < BUTTONS_COUNT; i++)
+	{
+		gpiod_line_release(button_line[i]);
+	}
+release_line_led:
 	for (int i = 0; i < LEDS_COUNT; i++)
 	{
 		gpiod_line_release(led_line[i]);
@@ -216,4 +259,68 @@ int SetLEDValue(struct gpiod_line *line, int value)
 		return -1;
 	}
 	return 0;
+}
+
+int RequestBulkEvents(struct gpiod_line_bulk *bulk, const char *consumer)
+{
+	int ret = gpiod_line_request_bulk_both_edges_events(bulkButton, consumer);
+	if (ret < 0)
+	{
+		ERR("Request event notification failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+struct gpiod_line *readPressedButton(struct gpiod_line_bulk *bulk, struct timespec *timeout, struct gpiod_line_bulk *event_bulk)
+{
+	struct gpiod_line *readLine;
+	struct timespec tbmax = {0, 200 * 1000000};
+	struct gpiod_line_event event;
+	int val;
+
+	val = gpiod_line_event_wait_bulk(bulk, timeout, event_bulk);
+	switch (val)
+	{
+	case 1:
+		readLine = gpiod_line_bulk_get_line(event_bulk, 0);
+		break;
+	case 0:
+		std::cout << "Game ended due to inactivity" << std::endl;
+		return NULL;
+	default:
+		ERR("Wait event bulk notification failed!\n");
+		return NULL;
+	}
+
+	while (val == 1)
+	{
+		int ret = gpiod_line_event_read(readLine, &event);
+		if (ret < 0)
+		{
+			ERR("Read last event notification failed")
+		}
+		val = gpiod_line_event_wait(readLine, &tbmax);
+	}
+
+	if (val < 0)
+	{
+		ERR("Wait event notification failed!\n");
+		return NULL;
+	}
+
+	return receievedLine;
+}
+
+ButtonType getPressedButtonType(struct gpiod_line *line, struct gpiod_line **buttons, int buttonsCount)
+{
+	//assuming that buttonsCount = 3
+	if (line == buttons[0])
+		return ButtonType::LEFT;
+	if (line == buttons[1])
+		return ButtonType::MIDDLE;
+	if (line == buttons[2])
+		return ButtonType::RIGHT;
+	return ButtonType::NONE;
+	
 }

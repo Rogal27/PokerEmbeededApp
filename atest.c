@@ -82,7 +82,9 @@ struct gpiod_line* readPressedButton(struct gpiod_line_bulk *bulkButton, struct 
 	
 	while(val)
 	{		
-		gpiod_line_event_read(receievedLine, &event);
+		int ret = gpiod_line_event_read(receievedLine, &event);
+		if(ret<0)
+			;//ERROR
 		val = gpiod_line_event_wait(receievedLine, &tbmax);
 	}
 
