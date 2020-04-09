@@ -32,8 +32,9 @@ class Poker
 {
 public:
     Poker(long balance, struct gpiod_line **lines, int linesCount, int seed = 0);
-
     ~Poker();
+
+    static void PrintHelp();
 
     void PlayNextRound();
     bool ChangeCards(bool shouldBeChanged[5]);

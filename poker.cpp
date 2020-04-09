@@ -32,6 +32,15 @@ Cards::Poker::~Poker()
     CleardLEDs();
 }
 
+void Cards::Poker::PrintHelp()
+{
+    std::cout << "------------HELP------------" << std::endl;
+    std::cout << "Left button is button #12" << std::endl;
+    std::cout << "Middle button is button #13" << std::endl;
+    std::cout << "Right button is button #14" << std::endl;
+    std::cout << "----------------------------" << std::endl;
+}
+
 void Cards::Poker::PlayNextRound()
 {
     if (state != Cards::State::StakeChoose)
@@ -101,8 +110,8 @@ void Cards::Poker::DrawSelectPanel(bool shouldBeChanged[5], int currentSelect)
     std::cout << "\x1b[1A"
               << "\x1b[1A"
               << "\x1b[1A";
-    
-    if(hasSelectedAllCards == true)
+
+    if (hasSelectedAllCards == true)
     {
         std::cout << "\x1b[1A";
         hasSelectedAllCards = false;
@@ -120,7 +129,7 @@ void Cards::Poker::ShowStakePrompt()
         std::cout << "You cannot call this method!" << std::endl;
         return;
     }
-    std::cout << "\x1b[1A";    
+    std::cout << "\x1b[1A";
     ShowStakePrompt(true);
     LightFirstNLeds(stakeIndex + 1);
 }

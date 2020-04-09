@@ -108,6 +108,8 @@ int main(int argc, char *argv[])
 
 	//gameplay
 	std::cout << "Create game" << std::endl;
+
+	Cards::Poker::PrintHelp();
 	try
 	{
 		game = new Cards::Poker(100, led_line, LEDS_COUNT, 0);
