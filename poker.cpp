@@ -420,7 +420,7 @@ bool Cards::Poker::CheckThreeOfAKind()
 bool Cards::Poker::CheckTwoPair()
 {
     int count;
-    int doubles_count;
+    int doubles_count = 0;
     for (int i = 0; i < cards.size(); i++)
     {
         count = CountCardsWithEqualValue(cards[i].GetValue());
