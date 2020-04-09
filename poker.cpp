@@ -2,10 +2,12 @@
 #include <time.h>
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
+#include <gpiod.h>
 
 #include "poker.h"
 
-Cards::Poker::Poker(long balance, int seed) : balance(balance), state(Cards::State::StakeChoose)
+Cards::Poker::Poker(long balance, struct gpiod_line **lines, int linesCount, int seed) : balance(balance), state(Cards::State::StakeChoose), lines(lines), linesCount(linesCount)
 {
     if (seed == 0)
         srand(time(NULL));
@@ -17,8 +19,11 @@ Cards::Poker::Poker(long balance, int seed) : balance(balance), state(Cards::Sta
     if (balance < 10)
         balance = 10;
     std::cout << "Welcome to simple poker!" << std::endl;
+    CleardLEDs();
+    FlashLEDs();
     std::cout << "Your current balance is " << balance << " tokens." << std::endl;
     ShowStakePrompt(true);
+    SetStakeWithLED(stakeIndex);
 }
 
 void Cards::Poker::PlayNextRound()
@@ -28,6 +33,7 @@ void Cards::Poker::PlayNextRound()
         std::cout << "You cannot call this method!" << std::endl;
         return;
     }
+    CleardLEDs();
     state = Cards::State::CardChoose;
     if (balance < stakes[stakeIndex])
     {
@@ -39,7 +45,6 @@ void Cards::Poker::PlayNextRound()
     DrawNewHand();
     PrintCurrentHand(true);
     bool shouldBeChanged[5] = {false, false, false, false, false};
-
     DrawSelectPanel(shouldBeChanged, 0, true);
 }
 
@@ -69,8 +74,10 @@ bool Cards::Poker::ChangeCards(bool shouldBeChanged[5])
     auto result = CalculateResult();
     int profit = CalculateTockenGain(result);
     PrintResult(result, profit);
+    FlashLEDsResult(result);
     balance += profit;
     std::cout << "Your current balance is " << balance << " tokens." << std::endl;
+    CleardLEDs();
     std::cout << "Do you want to play again? (Press middle button to play again)" << std::endl;
     state = Cards::State::StakeChoose;
     return true;
@@ -88,6 +95,8 @@ void Cards::Poker::DrawSelectPanel(bool shouldBeChanged[5], int currentSelect)
               << "\x1b[1A"
               << "\x1b[1A";
 
+    int count = CountSelectedCards(shouldBeChanged);
+    LightFirstNLeds(count);
     DrawSelectPanel(shouldBeChanged, currentSelect, true);
 }
 
@@ -109,6 +118,17 @@ void Cards::Poker::SetStake(int stakeIndex)
     if (stakeIndex >= stakes.size())
         stakeIndex = stakes.size() - 1;
     this->stakeIndex = stakeIndex;
+}
+
+void Cards::Poker::SetStakeWithLED(int stakeIndex)
+{
+    if (stakeIndex < 0)
+        stakeIndex = 0;
+    if (stakeIndex >= stakes.size())
+        stakeIndex = stakes.size() - 1;
+    this->stakeIndex = stakeIndex;
+
+    LightFirstNLeds(stakeIndex);
 }
 
 void Cards::Poker::InitStakes()
@@ -209,7 +229,7 @@ void Cards::Poker::ShowStakePrompt(bool isFirstTimeDraw)
         std::cout << "You cannot call this method!" << std::endl;
         return;
     }
-    std::cout << "Your current stake is: " << stakes[stakeIndex] <<". (Press left or right button to adjust, middle to play)" << std::endl;
+    std::cout << "Your current stake is: " << stakes[stakeIndex] << ". (Press left or right button to adjust, middle to play)" << std::endl;
 }
 
 int Cards::Poker::NextInt()
@@ -354,6 +374,22 @@ void Cards::Poker::PrintResult(Cards::WinType type, int wonTokens)
         std::cout << " tokens." << std::endl;
 }
 
+void Cards::Poker::FlashLEDsResult(Cards::WinType type)
+{
+    switch (type)
+    {
+    case Cards::WinType::Flush:
+    case Cards::WinType::FullHouse:
+    case Cards::WinType::FourOfAKind:
+    case Cards::WinType::StraightFlush:
+    case Cards::WinType::RoyalFlush:
+        FlashLEDs();
+        break;
+    default:
+        return;
+    }
+}
+
 bool Cards::Poker::CheckCardsVectorSize()
 {
     if (cards.size() != 5)
@@ -496,4 +532,65 @@ int Cards::Poker::CountCardsValueSum()
 {
     int sum = std::accumulate(cards.begin(), cards.end(), 0, [](const int &sum, const Cards::Card &card) { return sum + card.GetValue(); });
     return sum;
+}
+
+int Cards::Poker::CountSelectedCards(bool shouldBeChanged[5])
+{
+    int count = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        if (shouldBeChanged[i] == true)
+            count++;
+    }
+    return count;
+}
+
+void Cards::Poker::SetLEDValue(struct gpiod_line *line, int value)
+{
+    int ret = gpiod_line_set_value(line, value);
+    if (ret < 0)
+    {
+        throw std::runtime_error("LED ERROR");
+    }
+}
+
+void Cards::Poker::CleardLEDs()
+{
+    for (int i = 0; i < linesCount; i++)
+    {
+        SetLEDValue(lines[i], 0);
+    }    
+}
+
+void Cards::Poker::FlashLEDs()
+{
+    struct timespec sleep_time = {0, 200 * 1000000};
+    for (int k = 0; k < 3; k++)
+    {
+        for (int i = 0; i < linesCount; i++)
+        {
+            SetLEDValue(lines[i], 1);
+        }
+        nanosleep(&sleep_time, NULL);
+        for (int i = 0; i < linesCount; i++)
+        {
+            SetLEDValue(lines[i], 0);
+        }
+        nanosleep(&sleep_time, NULL);
+    }
+}
+
+void Cards::Poker::LightFirstNLeds(int n)
+{
+    int min = std::min(n, linesCount);
+
+    for (int i = min; i < linesCount; i++)
+    {
+        SetLEDValue(lines[i], 0);
+    }
+
+    for (int i = 0; i < min; i++)
+    {
+        SetLEDValue(lines[i], 1);
+    }
 }

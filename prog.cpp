@@ -12,6 +12,8 @@
 #define ERR(source) (perror(source), \
 					 fprintf(stderr, "%s:%d\n", __FILE__, __LINE__))
 
+constexpr int LEDS_COUNT = 4;
+
 struct gpiod_chip *CreateChip(const char *chipname);
 struct gpiod_line *GetLine(struct gpiod_chip *chip, unsigned int line_num);
 int LineRequestOutput(struct gpiod_line *line, const char *consumer = CONSUMER, int default_val = 0);
@@ -26,9 +28,38 @@ int main(int argc, char *argv[])
 	struct timespec ts = {1, 0};
 	struct gpiod_line_event event;
 	struct gpiod_chip *chip;
-	struct gpiod_line *line;
+
 	int i, ret;
 
+	//leds
+	struct gpiod_line *led_line[LEDS_COUNT];
+	unsigned int led_line_num[LEDS_COUNT];
+	for (int i = 0; i < LEDS_COUNT; i++)
+	{
+		led_line_num[i] = 24 + i; // GPIO Pin #24+i - led
+	}
+
+	//create chip
+	chip = CreateChip(chipname);
+	if (!chip)
+		goto close_chip;
+
+	//get lines for LED
+	for (int i = 0; i < LEDS_COUNT; i++)
+	{
+		led_line[i] = GetLine(chip, led_line_num[i]);
+		if (!led_line[i])
+			goto release_line;
+	}
+
+	//request output for LED
+	for (int i = 0; i < LEDS_COUNT; i++)
+	{
+		if (LineRequestOutput(led_line[i]) < 0)
+			goto release_line;
+	}
+
+	//gameplay
 	bool shouldBeChanged[5];
 	for (int i = 0; i < 5; i++)
 	{
@@ -38,11 +69,34 @@ int main(int argc, char *argv[])
 			shouldBeChanged[i] = true;
 	}
 	std::cout << "Create game" << std::endl;
-	auto game = Cards::Poker(1000);
-	game.PlayNextRound();
-	game.DrawSelectPanel(shouldBeChanged, 5);
-	game.ChangeCards(shouldBeChanged);
-	game.ShowStakePrompt();
+	Cards::Poker* game;
+	try
+	{
+		game = new Cards::Poker(1000, led_line, LEDS_COUNT,0);
+	}
+	catch (const std::runtime_error &e)
+	{
+		std::cerr << e.what() << '\n';
+		goto release_line;
+	}
+
+	sleep(2);
+
+	try
+	{
+		game->PlayNextRound();
+		sleep(2);
+		game->DrawSelectPanel(shouldBeChanged, 5);
+		sleep(2);
+		game->ChangeCards(shouldBeChanged);
+		sleep(2);
+		game->ShowStakePrompt();
+	}
+	catch (const std::runtime_error &e)
+	{
+		std::cerr << e.what() << '\n';
+		goto release_line;
+	}
 
 	sleep(2);
 	for (int i = 0; i < 5; i++)
@@ -52,65 +106,70 @@ int main(int argc, char *argv[])
 		else
 			shouldBeChanged[i] = true;
 	}
-	game.PlayNextRound();
-	game.DrawSelectPanel(shouldBeChanged, 5);
-	game.ChangeCards(shouldBeChanged);
-// 	chip = CreateChip(chipname);
-// 	if (!chip)
-// 		goto close_chip;
 
-// 	line = GetLine(chip, line_num);
-// 	if (!line)
-// 		goto release_line;
+	try
+	{
+		game->PlayNextRound();
+		sleep(2);
+		game->DrawSelectPanel(shouldBeChanged, 5);
+		sleep(2);
+		game->ChangeCards(shouldBeChanged);
+	}
+	catch (const std::runtime_error &e)
+	{
+		std::cerr << e.what() << '\n';
+		goto release_line;
+	}
 
-// 	// if(LineRequestOutput(line) < 0)
-// 	// 	goto release_line;
+	// 	ret = gpiod_line_request_both_edges_events(line, CONSUMER);
+	// 	if (ret < 0)
+	// 	{
+	// 		perror("Request event notification failed\n");
+	// 		ret = -1;
+	// 		goto release_line;
+	// 	}
 
-// 	ret = gpiod_line_request_both_edges_events(line, CONSUMER);
-// 	if (ret < 0)
-// 	{
-// 		perror("Request event notification failed\n");
-// 		ret = -1;
-// 		goto release_line;
-// 	}
+	// 	/* Notify event up to 20 times */
+	// 	i = 0;
+	// 	while (i <= 20)
+	// 	{
+	// 		ret = gpiod_line_event_wait(line, &ts);
+	// 		if (ret < 0)
+	// 		{
+	// 			perror("Wait event notification failed\n");
+	// 			ret = -1;
+	// 			goto release_line;
+	// 		}
+	// 		else if (ret == 0)
+	// 		{
+	// 			printf("Wait event notification on line #%u timeout\n", line_num);
+	// 			continue;
+	// 		}
 
-// 	/* Notify event up to 20 times */
-// 	i = 0;
-// 	while (i <= 20)
-// 	{
-// 		ret = gpiod_line_event_wait(line, &ts);
-// 		if (ret < 0)
-// 		{
-// 			perror("Wait event notification failed\n");
-// 			ret = -1;
-// 			goto release_line;
-// 		}
-// 		else if (ret == 0)
-// 		{
-// 			printf("Wait event notification on line #%u timeout\n", line_num);
-// 			continue;
-// 		}
+	// 		ret = gpiod_line_event_read(line, &event);
+	// 		printf("Get event notification on line #%u %d times\n", line_num, i);
+	// 		if (ret < 0)
+	// 		{
+	// 			perror("Read last event notification failed\n");
+	// 			ret = -1;
+	// 			goto release_line;
+	// 		}
+	// 		sleep(1);
 
-// 		ret = gpiod_line_event_read(line, &event);
-// 		printf("Get event notification on line #%u %d times\n", line_num, i);
-// 		if (ret < 0)
-// 		{
-// 			perror("Read last event notification failed\n");
-// 			ret = -1;
-// 			goto release_line;
-// 		}
-// 		sleep(1);
+	// 		i++;
+	// 	}
 
-// 		i++;
-// 	}
+	// 	ret = 0;
 
-// 	ret = 0;
-
-// release_line:
-// 	//release all lines
-// 	gpiod_line_release(line);
-// close_chip:
-// 	gpiod_chip_close(chip);
+release_line:
+	delete game;
+	//release all lines
+	for (int i = 0; i < LEDS_COUNT; i++)
+	{
+		gpiod_line_release(led_line[i]);
+	}
+close_chip:
+	gpiod_chip_close(chip);
 end:
 	return 0;
 }
