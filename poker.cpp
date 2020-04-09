@@ -36,6 +36,9 @@ void Cards::Poker::PlayNextRound()
     balance -= stakes[stakeIndex];
     DrawNewHand();
     PrintCurrentHand(true);
+    bool shouldBeChanged[5] = {false, false, false, false, false};
+
+    DrawSelectPanel(shouldBeChanged, 0, true);
 }
 
 void Cards::Poker::ChangeCards(bool shouldBeChanged[5])
@@ -68,16 +71,39 @@ void Cards::Poker::ChangeCards(bool shouldBeChanged[5])
     std::cout << "Your current balance is " << balance << " tokens." << std::endl;
 }
 
+void Cards::Poker::DrawSelectPanel(bool shouldBeChanged[5], int currentSelect)
+{
+    if (state != Cards::State::CardChoose)
+    {
+        std::cout << "You cannot call this method!" << std::endl;
+        return;
+    }
+
+    std::cout << "\x1b[1A"
+              << "\x1b[1A"
+              << "\x1b[1A"
+              << "\x1b[1A" << std::endl;
+
+    DrawSelectPanel(shouldBeChanged, currentSelect, true);
+}
+
+void Cards::Poker::SetStake(int stakeIndex)
+{
+    if (stakeIndex < 0)
+        stakeIndex = 0;
+    if (stakeIndex >= stakes.size())
+        stakeIndex = stakes.size() - 1;
+    this->stakeIndex = stakeIndex;
+}
+
 void Cards::Poker::InitStakes()
 {
     stakeIndex = 0;
-    stakes = std::vector<int>(6);
+    stakes = std::vector<int>(4);
     stakes[0] = 1;
     stakes[1] = 5;
-    stakes[2] = 10;
-    stakes[3] = 20;
-    stakes[4] = 50;
-    stakes[5] = 100;
+    stakes[2] = 25;
+    stakes[3] = 50;
 }
 
 void Cards::Poker::DrawNewHand()
@@ -118,6 +144,47 @@ void Cards::Poker::DrawChangedCards(bool shouldBeChanged[5])
         usedCards.push_back(cardValue);
         cards[i] = ConvertIntToCard(cardValue);
     }
+}
+
+void Cards::Poker::DrawSelectPanel(bool shouldBeChanged[5], int currentSelect, bool isFirstTimeDraw)
+{
+    if (state != Cards::State::CardChoose)
+    {
+        std::cout << "You cannot call this method!" << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+        std::cout << "┌─────────┐"
+                  << "  ";
+    }
+    std::cout << "┌────────┐" << std::endl;
+    for (int i = 0; i < 5; i++)
+    {
+        if (shouldBeChanged[i] == false && currentSelect != i)
+            std::cout << "│         │"
+                      << "  ";
+        if (shouldBeChanged[i] == false && currentSelect == i)
+            std::cout << "│   ░░░   │"
+                      << "  ";
+        if (shouldBeChanged[i] == true && currentSelect != i)
+            std::cout << "│░░░░░░░░░│"
+                      << "  ";
+        if (shouldBeChanged[i] == true && currentSelect == i)
+            std::cout << "│░░░   ░░░│"
+                      << "  ";
+    }
+    if (currentSelect == 5)
+        std::cout << "│  ░░░░  │" << std::endl;
+    else
+        std::cout << "│        │" << std::endl;
+    for (int i = 0; i < 5; i++)
+    {
+        std::cout << "└─────────┘"
+                  << "  ";
+    }
+    std::cout << "└────────┘" << std::endl;
 }
 
 int Cards::Poker::NextInt()

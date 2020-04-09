@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
 	auto game = Cards::Poker(1000);
 	std::cout << "Play next round" << std::endl;
 	game.PlayNextRound();
+	//sleep(5);
+	game.DrawSelectPanel(shouldBeChanged, 5);
 	std::cout << "Change cards" << std::endl;
 	game.ChangeCards(shouldBeChanged);
 

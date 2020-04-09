@@ -33,10 +33,13 @@ namespace Cards
 
         void PlayNextRound();
         void ChangeCards(bool shouldBeChanged[5]);
+        void DrawSelectPanel(bool shouldBeChanged[5], int currentSelect);
+        void SetStake(int stakeIndex);
     private:
         void InitStakes();
         void DrawNewHand();
         void DrawChangedCards(bool shouldBeChanged[5]);
+        void DrawSelectPanel(bool shouldBeChanged[5], int currentSelect, bool isFirstTimeDraw);
 
         int NextInt();
         Card ConvertIntToCard(int i);
