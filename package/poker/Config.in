@@ -1,0 +1,7 @@
+config BR2_PACKAGE_POKER
+	bool "poker"
+	select BR2_PACKAGE_LIBGPIOD #libgpiod
+	select BR2_PACKAGE_LIBGPIOD_TOOLS #libgpiod tools
+	help
+	  Package contains simple poker app.
+

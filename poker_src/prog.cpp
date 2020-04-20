@@ -266,7 +266,7 @@ struct gpiod_line *GetLine(struct gpiod_chip *chip, unsigned int line_num)
 	struct gpiod_line *line = gpiod_chip_get_line(chip, line_num);
 	if (!line)
 	{
-		ERR("Get line failed\n");
+		ERR(("Get line failed #" + std::to_string(line_num) + "\n").c_str());
 		return NULL;
 	}
 	return line;
