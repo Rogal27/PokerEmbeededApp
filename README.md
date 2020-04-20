@@ -11,4 +11,4 @@ To launch app you can use ```poker``` command in virtual machine.
 
 It may be necessary to run ```make clean all``` in buildroot directory.  
 
-GUI was created by my tutor and is available at his [GitHub Repository](https://github.com/wzab/BR_Internet_Radio).
+GUI was created by my tutor and is available on his [GitHub Repository](https://github.com/wzab/BR_Internet_Radio).
